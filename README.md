@@ -62,45 +62,48 @@ This build mode assumes you already have compiled LLVM and Clang libraries on yo
 * Create a directory for IWYU development, e.g. `iwyu`
 
 * Clone the IWYU Git repo:
-
-      iwyu$ git clone https://github.com/include-what-you-use/include-what-you-use.git
+```bash
+iwyu$ git clone https://github.com/include-what-you-use/include-what-you-use.git
+```
 
 * Presumably, you'll be building IWYU with a released version of LLVM and Clang, so check out the corresponding branch. For example, if you have Clang 6.0 installed, use the `clang_6.0` branch. IWYU `master` tracks LLVM & Clang `main`:
-
-      iwyu$ cd include-what-you-use
-      iwyu/include-what-you-use$ git checkout clang_6.0
-
+```bash
+iwyu$ cd include-what-you-use
+iwyu/include-what-you-use$ git checkout clang_6.0
+```
 * Create a build root and use CMake to generate a build system linked with LLVM/Clang prebuilts:
-
-      # This example uses the Makefile generator, but anything should work.
-      iwyu/include-what-you-use$ cd ..
-      iwyu$ mkdir build && cd build
-
-      # For IWYU 0.10/Clang 6 and earlier
-      iwyu/build$ cmake -G "Unix Makefiles" -DIWYU_LLVM_ROOT_PATH=/usr/lib/llvm-6.0 ../include-what-you-use
-
-      # For IWYU 0.11/Clang 7 and later
-      iwyu/build$ cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=/usr/lib/llvm-7 ../include-what-you-use
-
+```bash
+# This example uses the Makefile generator, but anything should work.
+iwyu/include-what-you-use$ cd ..
+iwyu$ mkdir build && cd build
+```
+```bash
+# For IWYU 0.10/Clang 6 and earlier
+iwyu/build$ cmake -G "Unix Makefiles" -DIWYU_LLVM_ROOT_PATH=/usr/lib/llvm-6.0 ../include-what-you-use
+```
+```bash
+# For IWYU 0.11/Clang 7 and later
+iwyu/build$ cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=/usr/lib/llvm-7 ../include-what-you-use
+```
   (substitute the `llvm-6.0` or `llvm-7` suffixes with the actual version compatible with your IWYU branch)
 
   or, if you have a local LLVM and Clang build tree, you can specify that as `CMAKE_PREFIX_PATH` for IWYU 0.11 and later:
-
-      iwyu/build$ cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=~/llvm-project/build ../include-what-you-use
-
+```bash
+iwyu/build$ cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=~/llvm-project/build ../include-what-you-use
+```
 * Once CMake has generated a build system, you can invoke it directly from `build`, e.g.
-
-      iwyu/build$ make
-
+```bash
+iwyu/build$ make
+```
 ### How to build as part of LLVM ###
 
 Instructions for building LLVM and Clang are available at <https://clang.llvm.org/get_started.html>.
 
 To include IWYU in the LLVM build, use the `LLVM_EXTERNAL_PROJECTS` and `LLVM_EXTERNAL_*_SOURCE_DIR` CMake variables when configuring LLVM:
-
-      llvm-project/build$ cmake -G "Unix Makefiles" -DLLVM_ENABLE_PROJECTS=clang -DLLVM_EXTERNAL_PROJECTS=iwyu -DLLVM_EXTERNAL_IWYU_SOURCE_DIR=/path/to/iwyu /path/to/llvm-project/llvm
-      llvm-project/build$ make
-
+```bash
+llvm-project/build$ cmake -G "Unix Makefiles" -DLLVM_ENABLE_PROJECTS=clang -DLLVM_EXTERNAL_PROJECTS=iwyu -DLLVM_EXTERNAL_IWYU_SOURCE_DIR=/path/to/iwyu /path/to/llvm-project/llvm
+llvm-project/build$ make
+```
 This builds all of LLVM, Clang and IWYU in a single tree.
 
 ### How to install ###
@@ -124,17 +127,17 @@ The original design was built for Make, but a number of alternative run modes ha
 #### Running on single source file ####
 
 The simplest way to use IWYU is to run it against a single source file:
-
-      include-what-you-use $CXXFLAGS myfile.cc
-
+```bash
+include-what-you-use $CXXFLAGS myfile.cc
+```
 where `$CXXFLAGS` are the flags you would normally pass to the compiler.
 
 #### Plugging into existing build system ####
 
 Typically there is already a build system containing the relevant compiler flags for all source files. Replace your compiler with `include-what-you-use` to generate a large batch of IWYU advice. Depending on your build system/build tools, this can take many forms, but for a simple GNU Make system it might look like this:
-
-      make -k CXX=include-what-you-use CXXFLAGS="-Xiwyu --error_always"
-
+```bash
+make -k CXX=include-what-you-use CXXFLAGS="-Xiwyu --error_always"
+```
 (The additional `-Xiwyu --error_always` switch makes `include-what-you-use` always exit with an error code, so the build system knows it didn't build a .o file.  Hence the need for `-k`.)
 
 In this mode `include-what-you-use` only analyzes the .cc (or .cpp) files known to your build system, along with their corresponding .h files.  If your project has a .h file with no corresponding .cc file, IWYU will ignore it unless you use the `--check_also` switch to add it for analysis together with a .cc file. It is possible to run IWYU against individual header files, provided the compiler flags are carefully constructed to match all includers.
@@ -146,19 +149,19 @@ CMake has grown native support for IWYU as of version 3.3. See [their documentat
 The `CMAKE_CXX_INCLUDE_WHAT_YOU_USE` option enables a mode where CMake first compiles a source file, and then runs IWYU on it.
 
 Use it like this:
-
-      mkdir build && cd build
-      CC="clang" CXX="clang++" cmake -DCMAKE_CXX_INCLUDE_WHAT_YOU_USE=include-what-you-use ...
-
+```bash
+mkdir build && cd build
+CC="clang" CXX="clang++" cmake -DCMAKE_CXX_INCLUDE_WHAT_YOU_USE=include-what-you-use ...
+```
 or, on Windows systems:
-
-      mkdir build && cd build
-      cmake -DCMAKE_CXX_COMPILER="%VCINSTALLDIR%/bin/cl.exe" -DCMAKE_CXX_INCLUDE_WHAT_YOU_USE=include-what-you-use -G Ninja ...
-
+```bash
+mkdir build && cd build
+cmake -DCMAKE_CXX_COMPILER="%VCINSTALLDIR%/bin/cl.exe" -DCMAKE_CXX_INCLUDE_WHAT_YOU_USE=include-what-you-use -G Ninja ...
+```
 These examples assume that `include-what-you-use` is in the `PATH`. If it isn't, consider changing the value to an absolute path. Arguments to IWYU can be added using CMake's semicolon-separated list syntax, e.g.:
-
-      ... cmake -DCMAKE_CXX_INCLUDE_WHAT_YOU_USE="include-what-you-use;-w;-Xiwyu;--verbose=7" ...
-
+```bash
+cmake -DCMAKE_CXX_INCLUDE_WHAT_YOU_USE="include-what-you-use;-w;-Xiwyu;--verbose=7"
+```
 The option appears to be separately supported for both C and C++, so use `CMAKE_C_INCLUDE_WHAT_YOU_USE` for C code.
 
 Note that with Microsoft's Visual C++ compiler, IWYU needs the `--driver-mode=cl` argument to understand the MSVC options from CMake.
@@ -168,17 +171,17 @@ Note that with Microsoft's Visual C++ compiler, IWYU needs the `--driver-mode=cl
 The `iwyu_tool.py` script pre-dates the native CMake support, and works off the [compilation database format](https://clang.llvm.org/docs/JSONCompilationDatabase.html). For example, CMake generates such a database named `compile_commands.json` with the `CMAKE_EXPORT_COMPILE_COMMANDS` option enabled.
 
 The script's command-line syntax is designed to mimic Clang's LibTooling, but they are otherwise unrelated. It can be used like this:
-
-      mkdir build && cd build
-      CC="clang" CXX="clang++" cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ...
-      iwyu_tool.py -p .
-
+```bash
+mkdir build && cd build
+CC="clang" CXX="clang++" cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ...
+iwyu_tool.py -p .
+```
 or, on Windows systems:
-
-      mkdir build && cd build
-      cmake -DCMAKE_CXX_COMPILER="%VCINSTALLDIR%/bin/cl.exe" -DCMAKE_C_COMPILER="%VCINSTALLDIR%/VC/bin/cl.exe" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -G Ninja ...
-      python3 iwyu_tool.py -p .
-
+```bash
+mkdir build && cd build
+cmake -DCMAKE_CXX_COMPILER="%VCINSTALLDIR%/bin/cl.exe" -DCMAKE_C_COMPILER="%VCINSTALLDIR%/VC/bin/cl.exe" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -G Ninja ...
+python3 iwyu_tool.py -p .
+```
 Unless a source filename is provided, all files in the project will be analyzed.
 
 See `iwyu_tool.py --help` for more options.
@@ -186,10 +189,10 @@ See `iwyu_tool.py --help` for more options.
 #### Applying fixes ####
 
 We also include a tool that automatically fixes up your source files based on the IWYU recommendations.  This is also alpha-quality software!  Here's how to use it (requires python3):
-
-      make -k CXX=include-what-you-use CXXFLAGS="-Xiwyu --error_always" 2> /tmp/iwyu.out
-      python3 fix_includes.py < /tmp/iwyu.out
-
+```bash
+make -k CXX=include-what-you-use CXXFLAGS="-Xiwyu --error_always" 2> /tmp/iwyu.out
+python3 fix_includes.py < /tmp/iwyu.out
+```
 If you don't like the way `fix_includes.py` munges your `#include` lines, you can control its behavior via flags. `fix_includes.py --help` will give a full list, but these are some common ones:
 
 * `-b`: Put blank lines between system and Google includes
@@ -211,25 +214,25 @@ Current IWYU pragmas are described in [IWYUPragmas](docs/IWYUPragmas.md).
 When analyzing C++ code on macOS, IWYU uses probing (implicitly via Clang) to find a libc++ standard library installation.
 
 If there is no installation of libc++ discoverable to Clang's probing, or an alternative libc++ is desired, users can specify relevant paths directly on command-line, e.g.:
+```bash
+# for Homebrew version of llvm-14
+include-what-you-use \
+  -nostdinc++ \
+  -isystem /opt/homebrew/opt/llvm\@14/include/c++/v1 \
+  sourcefile.cc
 
-    # for Homebrew version of llvm-14
-    include-what-you-use \
-        -nostdinc++ \
-        -isystem /opt/homebrew/opt/llvm\@14/include/c++/v1 \
-        sourcefile.cc
-
-    # for Apple Command Line Tools version of libc++
-    include-what-you-use \
-        -nostdinc++ \
-        -isystem /Library/Developer/CommandLineTools/usr/include/c++/v1 \
-        sourcefile.cc
-
+# for Apple Command Line Tools version of libc++
+include-what-you-use \
+  -nostdinc++ \
+  -isystem /Library/Developer/CommandLineTools/usr/include/c++/v1 \
+  sourcefile.cc
+```
 The mechanics of this technique are described in more detail for Clang here: <https://libcxx.llvm.org//UsingLibcxx.html#using-a-custom-built-libc>.
 
 To find the SDK install root, use:
-
-    xcrun --sdk macosx --show-sdk-path
-
+```bash
+xcrun --sdk macosx --show-sdk-path
+```
 Append `/usr/include/c++/v1` to that path to get the libc++ root.
 
 The libc++ library helpfully ships with a set of IWYU mappings, see their documentation for details: <https://libcxx.llvm.org/UsingLibcxx.html#include-what-you-use-iwyu>.
